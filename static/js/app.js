@@ -189,6 +189,32 @@ document.addEventListener('DOMContentLoaded', () => {
                     });
                 });
                 
+                // Delete functionality
+                const btnDelete = item.querySelector('.btn-delete');
+                btnDelete.addEventListener('click', async function() {
+                    const siteToDelete = this.dataset.site;
+                    if (confirm(`Are you sure you want to delete the password for ${siteToDelete}?`)) {
+                        try {
+                            const res = await fetch(`/api/passwords/${encodeURIComponent(siteToDelete)}`, {
+                                method: 'DELETE'
+                            });
+                            const data = await res.json();
+                            if (res.ok) {
+                                item.style.opacity = '0';
+                                item.style.transform = 'translateX(-20px)';
+                                setTimeout(() => {
+                                    fetchPasswords();
+                                    showMessage('Password deleted', 'success');
+                                }, 300);
+                            } else {
+                                showMessage(data.error || 'Failed to delete', 'error');
+                            }
+                        } catch (err) {
+                            showMessage('Network error', 'error');
+                        }
+                    }
+                });
+                
                 passwordsList.appendChild(item);
             }
         });
