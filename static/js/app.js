@@ -9,6 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const strengthBar = document.getElementById('strength-bar');
     const strengthText = document.getElementById('strength-text');
     const btnCopy = document.getElementById('btn-copy');
+    const btnToggleVis = document.getElementById('btn-toggle-vis');
     
     let allPasswords = {};
 
@@ -25,6 +26,10 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (err) {
             console.error('Error generating password', err);
         }
+    });
+
+    btnToggleVis.addEventListener('click', () => {
+        pwdInput.type = pwdInput.type === 'password' ? 'text' : 'password';
     });
 
     btnCopy.addEventListener('click', () => {
