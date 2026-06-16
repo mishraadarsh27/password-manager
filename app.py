@@ -42,6 +42,17 @@ def api_add_password():
         
     return jsonify({"message": "Saved successfully!"}), 201
 
+@app.route("/api/passwords/<website>", methods=["DELETE"])
+def api_delete_password(website):
+    passwords = get_passwords()
+    if website in passwords:
+        del passwords[website]
+        with open(PASSWORD_FILE, "w") as file:
+            for site, pwd in passwords.items():
+                file.write(f"{site}:{pwd}\n")
+        return jsonify({"message": "Deleted successfully!"}), 200
+    return jsonify({"error": "Password not found"}), 404
+
 @app.route("/api/generate-password", methods=["GET"])
 def api_generate_password():
     chars = string.ascii_letters + string.digits + "!@#$% "
