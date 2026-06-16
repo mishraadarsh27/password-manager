@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const searchInput = document.getElementById('search-passwords');
     const strengthBar = document.getElementById('strength-bar');
     const strengthText = document.getElementById('strength-text');
+    const btnCopy = document.getElementById('btn-copy');
     
     let allPasswords = {};
 
@@ -23,6 +24,14 @@ document.addEventListener('DOMContentLoaded', () => {
             evaluatePasswordStrength(data.password);
         } catch (err) {
             console.error('Error generating password', err);
+        }
+    });
+
+    btnCopy.addEventListener('click', () => {
+        if (pwdInput.value) {
+            navigator.clipboard.writeText(pwdInput.value).then(() => {
+                showMessage('Password copied to clipboard', 'success');
+            });
         }
     });
 
