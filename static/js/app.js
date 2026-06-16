@@ -145,7 +145,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const entries = Object.entries(allPasswords);
         
         if (entries.length === 0) {
-            passwordsList.innerHTML = '<div class="empty-state">No passwords saved yet.</div>';
+            passwordsList.innerHTML = `
+                <div class="empty-state" style="padding: 3rem 1rem;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 1rem; opacity: 0.5;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                    <h3 style="font-size: 1.2rem; color: var(--text-main); margin-bottom: 0.5rem;">Your vault is empty</h3>
+                    <p style="font-size: 0.95rem; line-height: 1.5;">Add your first password securely above to start managing your digital life.</p>
+                </div>
+            `;
             return;
         }
         
@@ -220,7 +226,13 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         
         if (matchCount === 0) {
-            passwordsList.innerHTML = '<div class="empty-state">No matching websites found.</div>';
+            passwordsList.innerHTML = `
+                <div class="empty-state" style="padding: 2rem 1rem;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 1rem; opacity: 0.5;"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                    <h3 style="font-size: 1.1rem; color: var(--text-main); margin-bottom: 0.5rem;">No matches found</h3>
+                    <p style="font-size: 0.9rem;">Try searching for a different website name.</p>
+                </div>
+            `;
         }
     }
     
