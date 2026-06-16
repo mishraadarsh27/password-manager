@@ -6,6 +6,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const messageEl = document.getElementById('add-message');
     const passwordsList = document.getElementById('passwords-list');
     const searchInput = document.getElementById('search-passwords');
+    const strengthBar = document.getElementById('strength-bar');
+    const strengthText = document.getElementById('strength-text');
     
     let allPasswords = {};
 
@@ -18,9 +20,14 @@ document.addEventListener('DOMContentLoaded', () => {
             const res = await fetch('/api/generate-password');
             const data = await res.json();
             pwdInput.value = data.password;
+            evaluatePasswordStrength(data.password);
         } catch (err) {
             console.error('Error generating password', err);
         }
+    });
+
+    pwdInput.addEventListener('input', (e) => {
+        evaluatePasswordStrength(e.target.value);
     });
 
     // Add password
@@ -44,6 +51,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (res.ok) {
                 showMessage(data.message, 'success');
                 addForm.reset();
+                evaluatePasswordStrength('');
                 fetchPasswords(); // Refresh list
             } else {
                 showMessage(data.error || 'Failed to save', 'error');
@@ -67,6 +75,38 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => {
             messageEl.classList.add('hidden');
         }, 3000);
+    }
+
+    function evaluatePasswordStrength(password) {
+        if (!password) {
+            strengthBar.style.width = '0%';
+            strengthText.textContent = '';
+            return;
+        }
+
+        let strength = 0;
+        if (password.length >= 8) strength += 25;
+        if (password.length >= 12) strength += 25;
+        if (/[A-Z]/.test(password)) strength += 15;
+        if (/[a-z]/.test(password)) strength += 15;
+        if (/[0-9]/.test(password)) strength += 10;
+        if (/[^A-Za-z0-9]/.test(password)) strength += 10;
+
+        strengthBar.style.width = `${Math.min(strength, 100)}%`;
+
+        if (strength <= 40) {
+            strengthBar.style.backgroundColor = 'var(--danger)';
+            strengthText.textContent = 'Weak';
+            strengthText.style.color = 'var(--danger)';
+        } else if (strength <= 75) {
+            strengthBar.style.backgroundColor = 'var(--warning)';
+            strengthText.textContent = 'Medium';
+            strengthText.style.color = 'var(--warning)';
+        } else {
+            strengthBar.style.backgroundColor = 'var(--accent)';
+            strengthText.textContent = 'Strong';
+            strengthText.style.color = 'var(--accent)';
+        }
     }
 
     async function fetchPasswords() {
