@@ -2,7 +2,7 @@
 
 VaultSafe is a sleek, modern, and lightweight web-based password manager. Originally a simple command-line Python script, it has been completely reimagined into a premium web application with a focus on UI/UX, utilizing a Flask backend and a "glassmorphism" frontend design.
 
-## 🚀 Features
+##  Features
 
 - **Beautiful Modern Interface**: Dark mode by default, featuring frosted glass (glassmorphism) cards and an animated gradient background.
 - **Secure Password Generator**: Instantly generate cryptographically secure 12-character passwords containing uppercase, lowercase, numbers, and symbols.
@@ -21,7 +21,7 @@ VaultSafe is a sleek, modern, and lightweight web-based password manager. Origin
 - **CSS3** (Custom properties, Flexbox, CSS Grid, animations)
 - **Vanilla JavaScript** (DOM manipulation, async Fetch API)
 
-## 📦 Installation & Setup
+##  Installation & Setup
 
 1. **Clone the repository:**
    ```bash
