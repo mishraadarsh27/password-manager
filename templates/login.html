@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - VaultSafe</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;800&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="background-animation"></div>
+    
+    <div class="container login-container">
+        <header>
+            <h1>Vault<span>Safe</span></h1>
+            <p>Your Personal Password Manager</p>
+        </header>
+
+        <div class="card login-card">
+            {% if is_setup %}
+                <h2>Welcome! Let's get secure.</h2>
+                <p class="setup-desc">Create a Master Password to encrypt and protect your vault. <strong>If you forget this, you will lose access to your passwords.</strong></p>
+                <form id="login-form" action="/login" method="POST">
+                    <input type="hidden" name="is_setup" value="true">
+                    <div class="input-group">
+                        <label for="master_password">Create Master Password</label>
+                        <div class="password-input-wrapper">
+                            <input type="password" id="master_password" name="master_password" required minlength="6">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-primary">Set Master Password & Encrypt</button>
+                </form>
+            {% else %}
+                <h2>Welcome Back</h2>
+                <p class="setup-desc">Enter your Master Password to unlock your vault.</p>
+                <form id="login-form" action="/login" method="POST">
+                    <input type="hidden" name="is_setup" value="false">
+                    <div class="input-group">
+                        <label for="master_password">Master Password</label>
+                        <div class="password-input-wrapper">
+                            <input type="password" id="master_password" name="master_password" required>
+                        </div>
+                    </div>
+                    {% if error %}
+                        <div class="error-msg">{{ error }}</div>
+                    {% endif %}
+                    <button type="submit" class="btn-primary">Unlock Vault</button>
+                </form>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>
