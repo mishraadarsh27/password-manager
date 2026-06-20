@@ -13,3 +13,5 @@ venv.bak/
 
 # Passwords
 password.txt
+master.txt
+secret.key
