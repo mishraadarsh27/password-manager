@@ -5,6 +5,7 @@ from functools import wraps
 import random
 import string
 import os
+import json
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24) # Secure session key
@@ -38,6 +39,30 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
+def parse_old_plaintext(file_path):
+    passwords = {}
+    with open(file_path, "r") as pt_file:
+        for line in pt_file:
+            line = line.strip()
+            if not line:
+                continue
+            parts = line.split(":", 1)
+            if len(parts) == 2:
+                passwords[parts[0]] = {"username": "", "password": parts[1]}
+    return passwords
+
+def parse_old_encrypted_lines(decrypted_text):
+    passwords = {}
+    lines = decrypted_text.split('\n')
+    for line in lines:
+        line = line.strip()
+        if not line:
+            continue
+        parts = line.split(":", 1)
+        if len(parts) == 2:
+            passwords[parts[0]] = {"username": "", "password": parts[1]}
+    return passwords
+
 def read_encrypted_passwords():
     passwords = {}
     if os.path.exists(PASSWORD_FILE):
@@ -45,36 +70,28 @@ def read_encrypted_passwords():
             encrypted_data = file.read()
             if not encrypted_data:
                 return passwords
+            
             try:
                 # Try to decrypt
                 decrypted_data = fernet.decrypt(encrypted_data).decode()
-                lines = decrypted_data.split('\n')
-                for line in lines:
-                    line = line.strip()
-                    if not line:
-                        continue
-                    parts = line.split(":", 1)
-                    if len(parts) == 2:
-                        passwords[parts[0]] = parts[1]
+                
+                try:
+                    # Try to parse as JSON (new format)
+                    passwords = json.loads(decrypted_data)
+                except json.JSONDecodeError:
+                    # Fallback: it's the old encrypted site:pwd format
+                    passwords = parse_old_encrypted_lines(decrypted_data)
+                    save_encrypted_passwords(passwords) # Migrate immediately
+                    
             except Exception:
-                # Fallback: it might be the old plaintext file!
-                with open(PASSWORD_FILE, "r") as pt_file:
-                    for line in pt_file:
-                        line = line.strip()
-                        if not line:
-                            continue
-                        parts = line.split(":", 1)
-                        if len(parts) == 2:
-                            passwords[parts[0]] = parts[1]
-                # We should re-save it as encrypted now since we just read plaintext
-                save_encrypted_passwords(passwords)
+                # Fallback: it might be the very old plaintext file
+                passwords = parse_old_plaintext(PASSWORD_FILE)
+                save_encrypted_passwords(passwords) # Migrate immediately
+                
     return passwords
 
 def save_encrypted_passwords(passwords):
-    lines = []
-    for site, pwd in passwords.items():
-        lines.append(f"{site}:{pwd}")
-    data = "\n".join(lines).encode()
+    data = json.dumps(passwords).encode()
     encrypted_data = fernet.encrypt(data)
     with open(PASSWORD_FILE, "wb") as file:
         file.write(encrypted_data)
@@ -85,18 +102,13 @@ def login():
     if request.method == "POST":
         password = request.form.get("master_password")
         if setup:
-            # First time setup
             hashed_pwd = generate_password_hash(password)
             with open(MASTER_FILE, "w") as f:
                 f.write(hashed_pwd)
-            
-            # Make sure we migrate plaintext to encrypted if any exist
-            read_encrypted_passwords()
-            
+            read_encrypted_passwords() # Migrate old passwords if any
             session['logged_in'] = True
             return redirect(url_for('index'))
         else:
-            # Verify login
             with open(MASTER_FILE, "r") as f:
                 saved_hash = f.read().strip()
             if check_password_hash(saved_hash, password):
@@ -115,7 +127,12 @@ def logout():
 @app.route("/")
 @login_required
 def index():
-    return render_template("index.html")
+    return render_template("vault.html")
+
+@app.route("/add")
+@login_required
+def add_password():
+    return render_template("add.html")
 
 @app.route("/api/passwords", methods=["GET"])
 @login_required
@@ -127,13 +144,14 @@ def api_get_passwords():
 def api_add_password():
     data = request.json
     site = data.get("website")
+    username = data.get("username", "")
     pwd = data.get("password")
     
     if not site or not pwd:
         return jsonify({"error": "Website and password are required"}), 400
         
     passwords = read_encrypted_passwords()
-    passwords[site] = pwd
+    passwords[site] = {"username": username, "password": pwd}
     save_encrypted_passwords(passwords)
         
     return jsonify({"message": "Saved successfully!"}), 201
