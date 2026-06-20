@@ -1,0 +1,13 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="card view-passwords-card full-width-card">
+    <h2>Your Saved Passwords</h2>
+    <div class="search-box">
+        <input type="text" id="search-passwords" placeholder="Search saved websites...">
+    </div>
+    <div id="passwords-list" class="passwords-list">
+        <div class="loading">Loading passwords...</div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personal Password Manager</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;800&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=4">
+    <script src="{{ url_for('static', filename='js/theme.js') }}?v=4"></script>
+</head>
+<body>
+    <div class="container">
+        <header class="app-header">
+            <div>
+                <h1 style="margin-bottom: 0;">Vault<span>Safe</span></h1>
+                <p>Your Personal Password Manager</p>
+            </div>
+            <nav class="top-nav">
+                <button id="theme-toggle" class="btn-icon" style="width: auto; padding: 0.5rem; border: none; background: transparent; font-size: 1.25rem; cursor: pointer;" title="Toggle Extra Dark Mode">🌙</button>
+                <a href="/" class="nav-link">My Vault</a>
+                <a href="/add" class="nav-link">Add Password</a>
+                <a href="/logout" class="btn-primary logout-btn">Logout</a>
+            </nav>
+        </header>
+
+        {% block content %}{% endblock %}
+    </div>
+
+    <div id="toast-container" class="toast-container"></div>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
