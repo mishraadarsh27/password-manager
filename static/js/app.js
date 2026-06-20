@@ -20,6 +20,7 @@ document.addEventListener('DOMContentLoaded', () => {
     btnGenerate.addEventListener('click', async () => {
         try {
             const res = await fetch('/api/generate-password');
+            if (res.status === 401) { window.location.href = '/login'; return; }
             const data = await res.json();
             pwdInput.value = data.password;
             evaluatePasswordStrength(data.password);
@@ -59,6 +60,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ website, password })
             });
+            
+            if (res.status === 401) { window.location.href = '/login'; return; }
             
             const data = await res.json();
             
@@ -132,6 +135,7 @@ document.addEventListener('DOMContentLoaded', () => {
     async function fetchPasswords() {
         try {
             const res = await fetch('/api/passwords');
+            if (res.status === 401) { window.location.href = '/login'; return; }
             allPasswords = await res.json();
             renderPasswords();
         } catch (err) {
@@ -204,6 +208,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             const res = await fetch(`/api/passwords/${encodeURIComponent(siteToDelete)}`, {
                                 method: 'DELETE'
                             });
+                            if (res.status === 401) { window.location.href = '/login'; return; }
                             const data = await res.json();
                             if (res.ok) {
                                 item.style.opacity = '0';
