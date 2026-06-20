@@ -3,6 +3,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnGenerate = document.getElementById('btn-generate');
     const pwdInput = document.getElementById('password');
     const websiteInput = document.getElementById('website');
+    const usernameInput = document.getElementById('username');
     const messageEl = document.getElementById('add-message');
     const passwordsList = document.getElementById('passwords-list');
     const searchInput = document.getElementById('search-passwords');
@@ -13,79 +14,99 @@ document.addEventListener('DOMContentLoaded', () => {
     
     let allPasswords = {};
 
-    // Fetch passwords on load
-    fetchPasswords();
+    // Fetch passwords on load if we are on the vault page
+    if (passwordsList) {
+        fetchPasswords();
+    }
 
     // Generate password
-    btnGenerate.addEventListener('click', async () => {
-        try {
-            const res = await fetch('/api/generate-password');
-            if (res.status === 401) { window.location.href = '/login'; return; }
-            const data = await res.json();
-            pwdInput.value = data.password;
-            evaluatePasswordStrength(data.password);
-        } catch (err) {
-            console.error('Error generating password', err);
-        }
-    });
+    if (btnGenerate) {
+        btnGenerate.addEventListener('click', async () => {
+            try {
+                const res = await fetch('/api/generate-password');
+                if (res.status === 401) { window.location.href = '/login'; return; }
+                const data = await res.json();
+                pwdInput.value = data.password;
+                evaluatePasswordStrength(data.password);
+            } catch (err) {
+                console.error('Error generating password', err);
+            }
+        });
+    }
 
-    btnToggleVis.addEventListener('click', () => {
-        pwdInput.type = pwdInput.type === 'password' ? 'text' : 'password';
-    });
+    if (btnToggleVis) {
+        btnToggleVis.addEventListener('click', () => {
+            pwdInput.type = pwdInput.type === 'password' ? 'text' : 'password';
+        });
+    }
 
-    btnCopy.addEventListener('click', () => {
-        if (pwdInput.value) {
-            navigator.clipboard.writeText(pwdInput.value).then(() => {
-                showMessage('Password copied to clipboard', 'success');
-            });
-        }
-    });
+    if (btnCopy) {
+        btnCopy.addEventListener('click', () => {
+            if (pwdInput.value) {
+                navigator.clipboard.writeText(pwdInput.value).then(() => {
+                    showMessage('Password copied to clipboard', 'success');
+                });
+            }
+        });
+    }
 
-    pwdInput.addEventListener('input', (e) => {
-        evaluatePasswordStrength(e.target.value);
-    });
+    if (pwdInput) {
+        pwdInput.addEventListener('input', (e) => {
+            evaluatePasswordStrength(e.target.value);
+        });
+    }
 
     // Add password
-    addForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        
-        const website = websiteInput.value.trim();
-        const password = pwdInput.value.trim();
-        
-        if (!website || !password) return;
-        
-        try {
-            const res = await fetch('/api/passwords', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ website, password })
-            });
+    if (addForm) {
+        addForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
             
-            if (res.status === 401) { window.location.href = '/login'; return; }
+            const website = websiteInput.value.trim();
+            const password = pwdInput.value.trim();
+            const username = usernameInput ? usernameInput.value.trim() : "";
             
-            const data = await res.json();
+            if (!website || !password) return;
             
-            if (res.ok) {
-                showMessage(data.message, 'success');
-                addForm.reset();
-                evaluatePasswordStrength('');
-                fetchPasswords(); // Refresh list
-            } else {
-                showMessage(data.error || 'Failed to save', 'error');
+            // Confirm overwrite if password already exists (would require fetching first, but let's assume standard behavior for now. Since add page doesn't have allPasswords loaded, we'll just POST it directly. If we wanted to check, we'd have to fetch first or let the backend do it.)
+            
+            try {
+                const res = await fetch('/api/passwords', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ website, username, password })
+                });
+                
+                if (res.status === 401) { window.location.href = '/login'; return; }
+                
+                const data = await res.json();
+                
+                if (res.ok) {
+                    showMessage(data.message, 'success');
+                    addForm.reset();
+                    evaluatePasswordStrength('');
+                    setTimeout(() => {
+                        window.location.href = '/';
+                    }, 1000);
+                } else {
+                    showMessage(data.error || 'Failed to save', 'error');
+                }
+            } catch (err) {
+                showMessage('Network error occurred', 'error');
             }
-        } catch (err) {
-            showMessage('Network error occurred', 'error');
-        }
-    });
+        });
+    }
 
     // Search filter
-    searchInput.addEventListener('input', (e) => {
-        const term = e.target.value.toLowerCase();
-        renderPasswords(term);
-    });
+    if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+            const term = e.target.value.toLowerCase();
+            renderPasswords(term);
+        });
+    }
 
     function showMessage(msg, type) {
         const toastContainer = document.getElementById('toast-container');
+        if (!toastContainer) return;
         const toast = document.createElement('div');
         toast.className = `toast ${type}`;
         toast.textContent = msg;
@@ -101,6 +122,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function evaluatePasswordStrength(password) {
+        if (!strengthBar) return;
         if (!password) {
             strengthBar.style.width = '0%';
             strengthText.textContent = '';
@@ -139,11 +161,14 @@ document.addEventListener('DOMContentLoaded', () => {
             allPasswords = await res.json();
             renderPasswords();
         } catch (err) {
-            passwordsList.innerHTML = '<div class="error">Failed to load passwords.</div>';
+            if (passwordsList) {
+                passwordsList.innerHTML = '<div class="error">Failed to load passwords.</div>';
+            }
         }
     }
 
     function renderPasswords(filterTerm = '') {
+        if (!passwordsList) return;
         passwordsList.innerHTML = '';
         
         const entries = Object.entries(allPasswords);
@@ -153,7 +178,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="empty-state" style="padding: 3rem 1rem;">
                     <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 1rem; opacity: 0.5;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
                     <h3 style="font-size: 1.2rem; color: var(--text-main); margin-bottom: 0.5rem;">Your vault is empty</h3>
-                    <p style="font-size: 0.95rem; line-height: 1.5;">Add your first password securely above to start managing your digital life.</p>
+                    <p style="font-size: 0.95rem; line-height: 1.5;">Add your first password securely to start managing your digital life.</p>
                 </div>
             `;
             return;
@@ -161,7 +186,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         let matchCount = 0;
         
-        entries.forEach(([site, pwd]) => {
+        entries.forEach(([site, pwdObj]) => {
             if (site.toLowerCase().includes(filterTerm)) {
                 matchCount++;
                 const item = document.createElement('div');
@@ -169,16 +194,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 // Truncate long sites or visually format them
                 item.innerHTML = `
-                    <div class="pwd-info" style="display: flex; align-items: center; gap: 1rem;">
+                    <div class="pwd-info" style="display: flex; flex-direction: column; gap: 0.25rem;">
                         <span class="site-name">${escapeHTML(site)}</span>
-                        <span class="pwd-text" title="Click to copy or reveal" data-pwd="${escapeHTML(pwd)}">${'*'.repeat(8)}</span>
+                        ${pwdObj.username ? `<span class="user-text">${escapeHTML(pwdObj.username)}</span>` : ''}
+                        <div style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.25rem;">
+                            <span class="pwd-text" title="Click to reveal" data-pwd="${escapeHTML(pwdObj.password)}">${'*'.repeat(8)}</span>
+                        </div>
                     </div>
-                    <button class="btn-delete" title="Delete Password" data-site="${escapeHTML(site)}">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2-2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
-                    </button>
+                    <div style="display: flex; gap: 0.5rem; align-items: center;">
+                        <button class="btn-copy-item" title="Copy Password" data-pwd="${escapeHTML(pwdObj.password)}">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                        </button>
+                        <button class="btn-delete" title="Delete Password" data-site="${escapeHTML(site)}">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2-2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                        </button>
+                    </div>
                 `;
                 
-                // Add click to copy / reveal functionality
+                // Add click to reveal functionality
                 const pwdEl = item.querySelector('.pwd-text');
                 pwdEl.addEventListener('click', function() {
                     if (this.textContent.includes('*')) {
@@ -187,15 +220,19 @@ document.addEventListener('DOMContentLoaded', () => {
                             this.textContent = '*'.repeat(8);
                         }, 5000);
                     }
-                    
-                    // Copy to clipboard
+                });
+
+                // Dedicated copy button functionality
+                const btnCopyItem = item.querySelector('.btn-copy-item');
+                btnCopyItem.addEventListener('click', function() {
                     navigator.clipboard.writeText(this.dataset.pwd).then(() => {
-                        // Visual feedback
-                        const originalBg = this.style.backgroundColor;
-                        this.style.backgroundColor = 'rgba(16, 185, 129, 0.4)';
+                        showMessage('Password copied to clipboard', 'success');
+                        // Visual feedback on the button itself
+                        const originalColor = this.style.color;
+                        this.style.color = 'var(--accent)';
                         setTimeout(() => {
-                            this.style.backgroundColor = originalBg;
-                        }, 500);
+                            this.style.color = originalColor;
+                        }, 1000);
                     });
                 });
                 
